@@ -535,6 +535,43 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Misc__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../Misc */ "./src/react/Misc/index.js");
 
 var taskQueue = (0,_Misc__WEBPACK_IMPORTED_MODULE_0__.createTaskQueue)();
+/**
+ * 要执行的子任务
+ */
+
+var subTask = null;
+var pendingCommit = null; // 调度任务
+
+var performTask = function performTask(deadline) {
+  workLoop(deadline);
+  /**
+   * 判断任务是否存在
+   * 判断任务队列中是否还有任务没有执行
+   * 再一次告诉浏览器在空闲的时间执行任务
+   */
+
+  if (subTask || !taskQueue.isEmpty()) {
+    requestIdleCallback(performTask);
+  }
+}; // 循环任务
+
+
+var workLoop = function workLoop(deadline) {
+  if (!subTask) {
+    subTask = getFirstTask();
+  }
+
+  while (subTask && deadline.timeRemaining() > 1) {
+    subTask = executeTask(subTask);
+  }
+}; // 获取任务
+
+
+var getFirstTask = function getFirstTask() {}; // 执行任务
+
+
+var executeTask = function executeTask() {};
+
 var render = function render(element, dom) {
   /**
    * 1. 向任务队列中添加任务
@@ -545,8 +582,9 @@ var render = function render(element, dom) {
     props: {
       children: element
     }
-  });
-  console.log(taskQueue.pop());
+  }); // console.log(taskQueue.pop())
+
+  requesIdleCallback(performTask);
   /**
    * 任务：通过 vdom 对象构建 fiber 对象
    * 任务队列：数组，存储各种任务
